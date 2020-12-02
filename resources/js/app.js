@@ -7,6 +7,15 @@
 require('./bootstrap');
 
 window.Vue = require('vue');
+import Vue from 'vue';
+import VueSweetalert2 from 'vue-sweetalert2';
+ 
+// If you don't need the styles, do not connect
+import 'sweetalert2/dist/sweetalert2.min.css';
+ 
+Vue.use(VueSweetalert2);
+//import post from './store/post.js'
+import store from './store'
 
 /**
  * The following block of code may be used to automatically register your
@@ -31,5 +40,6 @@ Vue.component('todos', require('./components/Todos.vue').default);
  */
 
 const app = new Vue({
+    store,
     el: '#app',
 });

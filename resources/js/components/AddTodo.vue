@@ -1,8 +1,17 @@
 <template>
     <div class="container">
         <div class="">
-            <h1 class="text-muted m-5">Add Todos</h1>
-            <div class="col-md-6">
+            <h1 class="text-muted m-5">{{ subtitle }}</h1>
+            <div class="col-md-10">
+                <div class="" v-if="error">
+                    <div v-for="err in error" :key="err.id" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>{{ err }}</strong>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>
+                </div>
+               
                 <div class="card">
                     <div class="card-body">
                         <form @submit.prevent="submit">
@@ -47,86 +56,70 @@
 </template>
 <script>
 import axios from 'axios'
+import store from '../store'
+import { mapGetters } from 'vuex'
+import { mapState } from 'vuex'
+import { mapActions } from 'vuex'
 
 export default {
     name: 'AddTodos',
-    data:()=> ({
-        form:{
-            title:null,
-            body:null,
-        },
-        posts: null,
-        isUpdate: false,
-        updateId: null,
-    }),
+    data:()=> ({}),
     methods: {
         submit: function(e) {
-            if(this.isUpdate) {
-                this.update(this.updateId)
+            if(this.form.update) {
+                console.log(true)
+                return store.dispatch('post/updatepost', this.form)
+                .then(this.getPost())
             }else {
-                axios.post('http://localhost:8000/api/post', this.form)
-                .then(res => {
-                    this.get()
-                    console.log(res.data)
-                    })
-                .catch(err=> {
-                    console.log(err.response)
+                return store.dispatch('post/addpost', this.form).then(() => {
+                    if(this.status) {
+                       this.$swal({
+                            icon: 'error',
+                            title: 'Oops..',
+                            text: 'Something went wrong!',
+                        })
+                    }else {
+                        this.$swal({
+                            icon: 'success',
+                            title: 'Data stored!',
+                            text: 'Successfully Save!',
+                        })
+                        this.getPost()
+                    }
                 })
             }
-             e.target.reset()
         },
-        get() {
-            axios.get('http://localhost:8000/api/post')
-            .then(res=> {
-                console.log(res.data)
-                this.posts = res.data
-            })
-            .catch(err=> {
-                console.log(err.response)
-            })
-        },
-         edit(id){
-            axios.get('http://localhost:8000/api/post/'+id)
-            .then(res=> {
-                console.log(res.data)
-                this.form.title =res.data.title
-                this.form.body =res.data.body
-                this.isUpdate = true
-                this.updateId = id
-            })
-            .catch(err => {
-                console.log(res.response)
-            })
-        },
-        update(id){
-            axios.put('http://localhost:8000/api/post/'+id, this.form)
-            .then(res=> {
-                console.log(res.data)
-                this.get()
-                this.isUpdate = false
-                this.updateId = null
-            })
-            .catch(err => {
-                console.log(res.response)
-            })
+        edit(id){
+            return store.dispatch('post/editpost', id)
         },
         deletePost(id) {
-            axios.delete('http://localhost:8000/api/post/'+id)
-            .then(res=> {
-                console.log(res.data)
-                this.get()
+            return store.dispatch('post/deletepost', id).then(() => {
+                this.$swal({
+                    icon: 'success',
+                    title: 'Deleted',
+                    text: 'Item remove from the database!',
+                })
+                this.getPost()
             })
-            .catch(err => {
-                console.log(err.response)
-            })
+        },   
+        getPost() {
+            return store.dispatch('post/fetchpost')
         }
     },
     created() {
-        this.get();
+        this.getPost()
+    },
+    computed: {
+        todos() { return store.getters['todos/getTodos'] },
+        subtitle() { return store.getters['todos/getTitle'] },
+        posts() { return store.getters['post/getPost'] },
+        error() { return store.getters['post/getError'] },
+        form() { return store.getters['post/getForm'] },
+        status() { return store.getters['post/getStatus'] },
     },
     mounted() {
         console.log('Component Mounted')
-    }
+    },
 }
 </script>
 
